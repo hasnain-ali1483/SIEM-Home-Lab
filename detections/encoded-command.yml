@@ -1,0 +1,9 @@
+name: Encoded Command Marker
+id: LAB-EXEC-002
+severity: medium
+logic:
+  event_type: process
+  process_name: powershell.exe
+  command_line_contains:
+    - "-enc"
+    - "encodedcommand"

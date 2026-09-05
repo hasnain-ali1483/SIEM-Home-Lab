@@ -1,0 +1,11 @@
+name: Failed Logins Followed by Success
+id: LAB-AUTH-002
+severity: high
+logic:
+  failure_count: ">= 5"
+  failure_window: 10m
+  success_window: 5m
+  correlation_key: user
+investigation:
+  - validate source and endpoint
+  - inspect post-login activity

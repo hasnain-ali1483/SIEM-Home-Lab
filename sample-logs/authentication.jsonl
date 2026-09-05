@@ -1,0 +1,6 @@
+{"timestamp":"2026-09-05T10:00:01Z","event_type":"authentication","outcome":"failure","user":"labuser","source_ip":"10.10.10.50","host":"lab-windows"}
+{"timestamp":"2026-09-05T10:00:20Z","event_type":"authentication","outcome":"failure","user":"labuser","source_ip":"10.10.10.50","host":"lab-windows"}
+{"timestamp":"2026-09-05T10:00:44Z","event_type":"authentication","outcome":"failure","user":"labuser","source_ip":"10.10.10.50","host":"lab-windows"}
+{"timestamp":"2026-09-05T10:01:12Z","event_type":"authentication","outcome":"failure","user":"labuser","source_ip":"10.10.10.50","host":"lab-windows"}
+{"timestamp":"2026-09-05T10:01:31Z","event_type":"authentication","outcome":"failure","user":"labuser","source_ip":"10.10.10.50","host":"lab-windows"}
+{"timestamp":"2026-09-05T10:02:10Z","event_type":"authentication","outcome":"success","user":"labuser","source_ip":"10.10.10.50","host":"lab-windows"}

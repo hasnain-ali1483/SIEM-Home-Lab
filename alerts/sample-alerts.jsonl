@@ -1,0 +1,8 @@
+{"alert_id":"LAB-ALERT-001","rule_id":"LAB-AUTH-001","severity":"medium","status":"closed","scenario":"failed_login_burst","disposition":"simulated_true_positive"}
+{"alert_id":"LAB-ALERT-002","rule_id":"LAB-AUTH-002","severity":"high","status":"closed","scenario":"failure_then_success","disposition":"simulated_true_positive"}
+{"alert_id":"LAB-ALERT-003","rule_id":"LAB-EXEC-001","severity":"medium","status":"closed","scenario":"suspicious_powershell","disposition":"simulated_true_positive"}
+{"alert_id":"LAB-ALERT-004","rule_id":"LAB-ACCOUNT-001","severity":"medium","status":"closed","scenario":"new_local_user","disposition":"simulated_true_positive"}
+{"alert_id":"LAB-ALERT-005","rule_id":"LAB-PRIV-001","severity":"high","status":"closed","scenario":"privilege_change","disposition":"simulated_true_positive"}
+{"alert_id":"LAB-ALERT-006","rule_id":"LAB-PERSIST-001","severity":"medium","status":"closed","scenario":"scheduled_task","disposition":"simulated_true_positive"}
+{"alert_id":"LAB-ALERT-007","rule_id":"LAB-EVASION-001","severity":"high","status":"closed","scenario":"audit_log_cleared","disposition":"simulated_true_positive"}
+{"alert_id":"LAB-ALERT-008","rule_id":"LAB-EXEC-002","severity":"medium","status":"closed","scenario":"encoded_command_marker","disposition":"simulated_true_positive"}

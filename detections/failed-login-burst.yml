@@ -1,0 +1,12 @@
+name: Failed Login Burst
+id: LAB-AUTH-001
+severity: medium
+logic:
+  event_type: authentication
+  outcome: failure
+  group_by: source_ip
+  threshold: 5
+  window: 5m
+tuning:
+  - exclude approved automation
+  - exclude authorized scanners

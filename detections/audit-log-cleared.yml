@@ -1,0 +1,6 @@
+name: Audit Log Cleared
+id: LAB-EVASION-001
+severity: high
+logic:
+  event_type: audit
+  action: log_cleared

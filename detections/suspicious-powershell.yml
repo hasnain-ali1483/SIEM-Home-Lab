@@ -1,0 +1,11 @@
+name: Suspicious PowerShell Activity
+id: LAB-EXEC-001
+severity: medium
+logic:
+  process_name: powershell.exe
+  suspicious_markers:
+    - "-enc"
+    - "encodedcommand"
+    - "downloadstring"
+    - "invoke-expression"
+    - "iex"

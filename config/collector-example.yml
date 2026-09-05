@@ -1,0 +1,14 @@
+collector:
+  name: lab-endpoint-01
+  protocol: syslog
+  destination: SIEM_HOSTNAME_OR_IP
+  port: 514
+  transport: tcp
+
+events:
+  - authentication
+  - process
+  - account_management
+  - group_management
+  - persistence
+  - audit

@@ -1,0 +1,6 @@
+name: New Local User
+id: LAB-ACCOUNT-001
+severity: medium
+logic:
+  event_type: account_management
+  action: user_created

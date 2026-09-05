@@ -1,0 +1,7 @@
+name: Privilege or Group Membership Change
+id: LAB-PRIV-001
+severity: high
+logic:
+  event_type: group_management
+  action: member_added
+  privileged_group: true

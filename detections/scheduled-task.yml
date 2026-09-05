@@ -1,0 +1,7 @@
+name: Scheduled Task Created
+id: LAB-PERSIST-001
+severity: medium
+logic:
+  event_type: persistence
+  mechanism: scheduled_task
+  action: created

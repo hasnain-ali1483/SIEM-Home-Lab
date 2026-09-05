@@ -1,0 +1,2 @@
+{"timestamp":"2026-09-05T10:05:00Z","event_type":"process","process_name":"powershell.exe","command_line":"powershell.exe -enc LAB_SIMULATED_VALUE","user":"labuser","host":"lab-windows"}
+{"timestamp":"2026-09-05T10:06:00Z","event_type":"process","process_name":"cmd.exe","command_line":"cmd.exe /c echo SIEM_LAB_TEST","user":"labuser","host":"lab-windows"}
