@@ -1,4 +1,4 @@
-# SIEM Home Lab — SOC Analyst Detection Engineering
+# SIEM Home Lab 
 
 > **Completed portfolio project | Controlled simulation | 8/8 detection scenarios validated**
 
