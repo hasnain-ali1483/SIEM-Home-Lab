@@ -1,0 +1,12 @@
+<group name="windows, privilege_escalation, uac_bypass,">
+  <rule id="100110" level="14">
+    <if_sid>61603</if_sid> <!-- Sysmon Event 1 -->
+    <field name="win.system.eventID">^1$</field>
+    <field name="win.eventdata.parentImage" type="pcre2">(?i)(fodhelper\.exe|eventvwr\.exe|slui\.exe)$</field>
+    <field name="win.eventdata.image" type="pcre2">(?i)(cmd\.exe|powershell\.exe|pwsh\.exe)$</field>
+    <description>UAC Bypass: Suspicious child process spawned by AutoElevate executable</description>
+    <mitre>
+      <id>T1548.002</id>
+    </mitre>
+  </rule>
+</group>

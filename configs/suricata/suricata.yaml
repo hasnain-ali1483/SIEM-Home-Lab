@@ -1,0 +1,70 @@
+# This is a partial configuration highlighting lab-specific settings.
+# Merge with default suricata.yaml as needed.
+
+%YAML 1.1
+---
+
+# Home network definition
+vars:
+  address-groups:
+    # Set to VirtualBox Host-Only network subnet
+    HOME_NET: "[192.168.56.0/24]"
+    EXTERNAL_NET: "!$HOME_NET"
+
+# Network Interfaces Configuration
+af-packet:
+  # The listening interface: vboxnet0 for host, or enp0s8 if deployed inside the VM
+  - interface: vboxnet0 
+    cluster-id: 99
+    cluster-type: cluster_flow
+    defrag: yes
+    use-mmap: yes
+    tpacket-v3: yes
+
+# Logging Outputs
+outputs:
+  - eve-log:
+      enabled: yes
+      filetype: regular # Output to a regular file
+      filename: /var/log/suricata/eve.json
+      # JSON format enabled for native Wazuh integration
+      types:
+        - alert:
+            payload: yes             # enable dumping payload in Base64
+            payload-buffer-size: 4kb # max size of payload buffer to output
+            payload-printable: yes   # enable dumping payload in printable format
+            packet: yes              # enable dumping of packet
+        - dns:
+            query: yes     # enable logging of DNS queries
+            answer: yes    # enable logging of DNS answers
+        - http:
+            extended: yes  # enable for extended logging information
+        - tls:
+            extended: yes  # enable for extended logging information
+        - files:
+            force-magic: no 
+        - flow
+      
+# Rule files configuration
+rule-files:
+  # Included ET Open rules via suricata-update
+  - suricata.rules 
+  # Custom rule file for lab-specific detections
+  - /etc/suricata/rules/local.rules 
+
+# Performance Settings appropriate for a VM
+# Configured for 2 CPU threads
+runmode: workers
+
+threading:
+  set-cpu-affinity: no
+  cpu-affinity:
+    - management-cpu-set:
+        cpu: [ 0 ]
+    - receive-cpu-set:
+        cpu: [ 0 ]
+    - worker-cpu-set:
+        cpu: [ "0-1" ]
+        mode: "exclusive"
+        prio:
+          default: "high"

@@ -1,0 +1,23 @@
+<group name="windows, defense_evasion, log_clearing,">
+  <!-- Windows Native Event Log Cleared -->
+  <rule id="100170" level="15">
+    <if_sid>60100</if_sid>
+    <field name="win.system.eventID">^1102$|^104$</field>
+    <description>CRITICAL: Windows Event Log Cleared (Event 1102 or 104)</description>
+    <mitre>
+      <id>T1070.001</id>
+    </mitre>
+  </rule>
+
+  <!-- Wevtutil Execution -->
+  <rule id="100171" level="14">
+    <if_sid>61603</if_sid>
+    <field name="win.system.eventID">^1$</field>
+    <field name="win.eventdata.image" type="pcre2">(?i)wevtutil\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i) cl | clear-log </field>
+    <description>CRITICAL: wevtutil executed to clear event logs</description>
+    <mitre>
+      <id>T1070.001</id>
+    </mitre>
+  </rule>
+</group>

@@ -1,0 +1,35 @@
+<group name="windows, credential_access, brute_force,">
+  <!-- Parent Rule: RDP Failed Logon -->
+  <rule id="100100" level="3">
+    <if_sid>60106</if_sid> <!-- Base Windows Logon Failure Rule -->
+    <field name="win.system.eventID">^4625$</field>
+    <field name="win.eventdata.logonType">^10$|^3$</field>
+    <description>RDP or Network Logon Failure (Event 4625)</description>
+    <mitre>
+      <id>T1110.001</id>
+    </mitre>
+  </rule>
+
+  <!-- Frequency Rule: Brute Force Detection -->
+  <rule id="100101" level="10" frequency="5" timeframe="120">
+    <if_matched_sid>100100</if_matched_sid>
+    <same_source_ip />
+    <description>RDP Brute Force: Multiple failed logons from same source IP within 120 seconds</description>
+    <mitre>
+      <id>T1110.001</id>
+    </mitre>
+  </rule>
+
+  <!-- Success after Brute Force -->
+  <rule id="100102" level="12">
+    <if_sid>60103</if_sid> <!-- Base Windows Logon Success Rule -->
+    <field name="win.system.eventID">^4624$</field>
+    <field name="win.eventdata.logonType">^10$|^3$</field>
+    <if_matched_sid>100101</if_matched_sid>
+    <same_source_ip />
+    <description>CRITICAL: Successful RDP Logon following Brute Force activity from same IP</description>
+    <mitre>
+      <id>T1110.001</id>
+    </mitre>
+  </rule>
+</group>
