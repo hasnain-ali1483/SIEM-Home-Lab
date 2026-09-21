@@ -1,0 +1,31 @@
+<group name="local,syslog,sshd,">
+
+  <rule id="100002" level="12">
+    <if_sid>554</if_sid>
+    <match>webshell.php</match>
+    <description>CRITICAL: Malicious Webshell Backdoor detected!</description>
+    <group>malware,fim,</group>
+  </rule>
+
+  <rule id="5712" level="10" frequency="3" timeframe="120" ignore="60" overwrite="yes">
+    <if_matched_sid>5710</if_matched_sid>
+    <same_source_ip />
+    <description>sshd: brute force trying to get access to the system. Non existent user.</description>
+    <group>authentication_failures</group>
+  </rule>
+
+  <rule id="5720" level="10" frequency="3" overwrite="yes">
+    <if_matched_sid>5716</if_matched_sid>
+    <same_source_ip />
+    <description>sshd: Multiple authentication failures.</description>
+    <group>authentication_failures</group>
+  </rule>
+
+  <rule id="5763" level="10" frequency="3" timeframe="120" ignore="60" overwrite="yes">
+    <if_matched_sid>5760</if_matched_sid>
+    <same_source_ip/>
+    <description>sshd: brute force trying to get access to the system. Authentication failed.</description>
+    <group>authentication_failures</group>
+  </rule>
+
+</group>

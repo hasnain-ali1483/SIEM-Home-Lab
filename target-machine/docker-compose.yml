@@ -1,0 +1,9 @@
+services:
+  linux-target:
+    build: .
+    container_name: linux-target
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "2222:22"
+    restart: always

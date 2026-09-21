@@ -1,140 +1,128 @@
-# SIEM Home Lab — Detection Engineering & Adversary Simulation
+# SOC Home Lab Case Study & Incident Report
 
-![Wazuh](https://img.shields.io/badge/Wazuh-4.5+-blue?style=flat-square&logo=wazuh)
-![Suricata](https://img.shields.io/badge/Suricata-7.0+-orange?style=flat-square)
-![Sysmon](https://img.shields.io/badge/Sysmon-15.0+-lightgrey?style=flat-square&logo=windows)
-![Kali Linux](https://img.shields.io/badge/Kali_Linux-2024.1-blue?style=flat-square&logo=kalilinux)
+**Author:** Ali  
+**Date:** September 21, 2026  
+**Focus Areas:** SIEM Engineering, Threat Detection, Automated Incident Response  
 
-## Project Overview
-This project demonstrates the design, implementation, and operation of a localized Security Information and Event Management (SIEM) and Extended Detection and Response (XDR) environment. Utilizing Wazuh, Suricata, and Sysmon, this lab simulates a realistic enterprise network environment under attack. It showcases advanced endpoint telemetry collection, network traffic analysis, custom detection engineering based on the MITRE ATT&CK framework, and hands-on adversary simulation. The primary objective is to highlight practical SOC (Security Operations Center) analyst skills, including threat hunting, log analysis, and incident triage.
+---
 
-## Lab Architecture
-The lab environment consists of four Virtual Machines running within VirtualBox, connected via an isolated Host-Only network to ensure safe adversary simulation.
+## Executive Summary
+In this project, I engineered a localized Security Operations Center (SOC) environment using Docker to simulate, detect, and automatically respond to cyber threats. Leveraging **Wazuh 4.9.0** as the primary SIEM platform, I deployed a vulnerable Ubuntu target host and successfully implemented custom File Integrity Monitoring (FIM) rules to detect malware (Webshell) drops. Furthermore, I engineered an Automated Active Response pipeline to instantly mitigate SSH brute-force attacks by dynamically blacklisting malicious IPs via `iptables`, reducing incident response time to seconds.
 
-```text
-                                 Host-Only Network (192.168.56.0/24)
-                                 -----------------------------------
-                                                 |
-         +------------------------+              |             +------------------------+
-         |      SIEM Server       |              |             |    Attacker Machine    |
-         | (Ubuntu Server 24.04)  |--------------+-------------|      (Kali Linux)      |
-         |     192.168.56.10      |              |             |      192.168.56.50     |
-         +------------------------+              |             +------------------------+
-         - Wazuh Manager / XDR                   |
-         - Suricata NIDS                         |
-                                                 |
-         +------------------------+              |             +------------------------+
-         |     Windows Target     |              |             |      Linux Target      |
-         | (Windows 11 Enterprise)|--------------+-------------| (Ubuntu Server 22.04)  |
-         |     192.168.56.20      |                            |      192.168.56.30     |
-         +------------------------+                            +------------------------+
-         - Wazuh Agent                                         - Wazuh Agent
-         - Sysmon                                              - auditd / rsyslog
+---
+
+## Environment Architecture & Deployment
+
+The lab environment was containerized to ensure isolation and reproducibility. The architecture consists of:
+1. **SIEM Manager:** A single-node Wazuh Manager and OpenSearch indexer stack deployed via Docker Compose.
+2. **Target Host:** A minimalist Ubuntu 24.04 container, intentionally configured with elevated network privileges (`NET_ADMIN`) to permit firewall manipulation during Active Response testing.
+
+### Agent Provisioning
+I successfully provisioned the Wazuh agent on the target host, established secure communication with the SIEM manager, and validated telemetry ingestion.
+
+![Agent Installation](assets/agent_install.png)
+
+---
+
+## Scenario 1: File Integrity & Malware Detection (Webshell)
+
+### Methodology
+To test the SIEM's ability to detect unauthorized modifications to critical web directories, I configured the Wazuh agent's `syscheck` module to perform real-time monitoring on `/var/www/html`. I then simulated an attacker dropping a PHP Webshell backdoor into the directory. 
+
+To ensure high visibility, I authored a custom XML decoder and rule (Rule ID: `100002`) to elevate this specific file creation event to a **Level 12 (Critical)** severity alert.
+
+![FIM Configuration & Webshell Drop](assets/fim_setup.png)
+
+### Incident Details & MITRE ATT&CK Mapping
+* **Tactic:** Persistence (TA0003), Privilege Escalation (TA0004)
+* **Technique:** Server Software Component: Web Shell (T1505.003)
+* **Trigger Path:** `/var/www/html/webshell.php`
+* **Severity:** CRITICAL (12)
+
+### Raw Event Telemetry (JSON Snippet)
+```json
+{
+  "timestamp": "2026-09-21T10:01:42.911+0000",
+  "rule": {
+    "level": 12,
+    "description": "CRITICAL: Malicious Webshell Backdoor detected!",
+    "id": "100002",
+    "firedtimes": 1,
+    "mail": true,
+    "groups": ["local", "syslog", "sshd", "malware", "fim"]
+  },
+  "syscheck": {
+    "path": "/var/www/html/webshell.php",
+    "mode": "realtime",
+    "event": "added"
+  }
+}
 ```
 
-## Technologies Used
-* **Wazuh SIEM/XDR**: Centralized log collection, alert generation, and endpoint response.
-* **Sysmon (System Monitor)**: Advanced Windows endpoint telemetry (process creation, network connections, file modifications).
-* **Suricata IDS**: Network Intrusion Detection System for monitoring malicious traffic patterns.
-* **Kali Linux**: Offensive security platform used for adversary simulation.
-* **Atomic Red Team**: Library of simple, testable attacks mapped to the MITRE ATT&CK framework.
-* **VirtualBox**: Type-2 hypervisor utilized for virtual machine provisioning and network isolation.
+---
 
-## Detection Rules
-The following custom detection rules were engineered and validated during the adversary simulation phase.
+## Scenario 2: SSH Brute Force & Automated Active Response
 
-| Rule ID | MITRE ATT&CK ID | Technique Name | Detection Description |
-| :--- | :--- | :--- | :--- |
-| `100100-100102` | T1110.001 | Brute Force: Password Guessing | Detects multiple failed RDP logon attempts from a single source, alerts on successful logon after brute force. |
-| `100110` | T1548.002 | Bypass User Access Control | Detects UAC bypass via auto-elevating binaries (fodhelper, eventvwr, slui) spawning shells. |
-| `100120-100121` | T1021.002 | Remote Services: SMB/Windows Admin Shares | Detects lateral movement via PsExec service creation and remote SMB execution. |
-| `100130-100131` | T1059.001 | PowerShell: Encoded Commands | Detects encoded PowerShell execution and suspicious Script Block content. |
-| `100140-100142` | T1105 / T1218 | Ingress Tool Transfer / LOLBAS | Detects file downloads via certutil, bitsadmin, and mshta execution. |
-| `100150` | T1053.005 | Scheduled Task/Job | Detects scheduled task creation executing binaries from user-writable paths. |
-| `100160` | T1547.001 | Registry Run Keys | Detects modifications to Run/RunOnce autostart registry keys. |
-| `100170-100171` | T1070.001 | Clear Windows Event Logs | Detects audit log clearing via Event ID 1102 and wevtutil commands. |
-| `100180` | T1003.001 | LSASS Memory Dumping | Detects suspicious process access to lsass.exe for credential theft. |
-| `100190-100192` | T1059.004 | Unix Shell: Reverse Shell | Detects common reverse shell patterns (bash, netcat, python, perl). |
+### Methodology
+Manual incident response is often too slow to stop automated credential stuffing. To demonstrate proactive defense, I configured the Wazuh Manager's **Active Response** module to trigger a `firewall-drop` script on the target host whenever a brute-force attack was detected. I lowered the detection threshold from the default 8 attempts down to 3 attempts to force a rapid response.
 
-## Skills Demonstrated
-* **Detection Engineering**: Creating precise, actionable alerts mapped to MITRE ATT&CK.
-* **Log Analysis**: Correlating complex events across Sysmon, Windows Event Logs, auditd, and Suricata.
-* **Endpoint Telemetry**: Configuring advanced logging mechanisms on Windows (Sysmon, Script Block Logging) and Linux (auditd).
-* **Network Intrusion Detection**: Deploying and configuring Suricata to monitor subnet traffic.
-* **MITRE ATT&CK Mapping**: Analyzing behaviors and mapping them to attacker tactics and techniques.
-* **Adversary Simulation**: Safely executing advanced persistent threat (APT) techniques.
-* **Incident Response & Triage**: Developing playbook-driven responses to confirmed security incidents.
+I executed the attack from the host machine against the containerized SSH daemon. On the 3rd failed password attempt, the SIEM triggered the Active Response, injecting a drop rule into the container's `iptables`, immediately severing my connection.
 
-## Getting Started
-Follow the documentation in the `docs/` directory to replicate this lab environment:
-1. [Lab Setup & Network Configuration](docs/01-lab-setup.md)
-2. [SIEM Installation (Wazuh & Suricata)](docs/02-siem-installation.md)
-3. [Endpoint Configuration (Windows & Linux)](docs/03-endpoint-config.md)
-4. [Adversary Simulation & Attack Execution](docs/04-attack-simulation.md)
-5. [MITRE ATT&CK Coverage Analysis](docs/05-mitre-coverage.md)
+### Attack Simulation Terminal
+*Notice the connection freezing immediately after the 3rd attempt, confirming the firewall drop execution.*
+![Terminal showing SSH Brute Force attempts](assets/ssh_brute_force.png)
 
-## Repository Structure
-```text
-.
-├── README.md
-├── docs/
-│   ├── 01-lab-setup.md                # VirtualBox + VM setup guide
-│   ├── 02-siem-installation.md        # Wazuh & Suricata installation
-│   ├── 03-endpoint-config.md          # Sysmon, auditd, agent deployment
-│   ├── 04-attack-simulation.md        # Kill chain attack procedures
-│   └── 05-mitre-coverage.md           # ATT&CK coverage analysis
-├── configs/
-│   ├── sysmon/
-│   │   └── sysmonconfig.xml           # Windows endpoint telemetry config
-│   ├── wazuh/
-│   │   ├── ossec.conf                 # Wazuh manager configuration
-│   │   └── agent.conf                 # Centralized agent group config
-│   ├── suricata/
-│   │   └── suricata.yaml              # Network IDS configuration
-│   └── windows/
-│       └── audit-policy.md            # GPO & audit policy guide
-├── detections/
-│   ├── README.md                      # Detection engineering methodology
-│   ├── credential-access/
-│   │   ├── brute-force-rdp.xml        # T1110.001 — Brute Force
-│   │   ├── brute-force-rdp.md
-│   │   ├── lsass-access.xml           # T1003.001 — LSASS Dumping
-│   │   └── lsass-access.md
-│   ├── privilege-escalation/
-│   │   ├── uac-bypass.xml             # T1548.002 — UAC Bypass
-│   │   └── uac-bypass.md
-│   ├── lateral-movement/
-│   │   ├── psexec-detection.xml       # T1021.002 — PsExec / SMB
-│   │   └── psexec-detection.md
-│   ├── execution/
-│   │   ├── encoded-powershell.xml     # T1059.001 — Encoded PowerShell
-│   │   ├── encoded-powershell.md
-│   │   ├── lolbas-certutil.xml        # T1105 — Certutil Download
-│   │   ├── linux-reverse-shell.xml    # T1059.004 — Reverse Shell
-│   │   └── linux-reverse-shell.md
-│   ├── persistence/
-│   │   ├── scheduled-task.xml         # T1053.005 — Scheduled Task
-│   │   ├── registry-run-key.xml       # T1547.001 — Registry Run Key
-│   │   └── persistence.md
-│   └── defense-evasion/
-│       ├── log-clearing.xml           # T1070.001 — Log Tampering
-│       └── log-clearing.md
-├── attack-simulations/
-│   ├── atomic-red-team/
-│   │   └── run-atomics.ps1            # Automated Atomic RT execution
-│   ├── manual-attacks/
-│   │   ├── brute-force-hydra.sh       # Hydra brute force script
-│   │   ├── lateral-movement.sh        # Impacket lateral movement
-│   │   └── persistence-implant.ps1    # Windows persistence simulation
-│   └── attack-matrix.md              # Attack-to-detection mapping
-├── playbooks/
-│   ├── PB-001-BruteForce.md           # Tier 1 SOC Triage Playbook
-│   ├── PB-002-UACBypass.md
-│   ├── PB-003-LateralMovement.md
-│   └── PB-004-LogTampering.md
-├── incident-reports/
-│   ├── INC-2026-001-BruteForce.md     # Full investigation walkthrough
-│   └── INC-2026-002-LateralMovement.md
-└── mitre-attack/
-    └── navigator-layer.json           # ATT&CK Navigator heatmap layer
+### Incident Details & MITRE ATT&CK Mapping
+* **Tactic:** Credential Access (TA0006)
+* **Technique:** Brute Force: Password Guessing (T1110.001)
+* **Trigger Rule:** `5763` (sshd: brute force trying to get access to the system)
+* **Response Rule:** `651` (Host Blocked by firewall-drop Active Response)
+* **Mitigation Action:** Source IP banned via `iptables` for 60 seconds.
+
+### Raw Event Telemetry (JSON Snippet)
+```json
+{
+  "timestamp": "2026-09-21T11:18:24.355+0000",
+  "rule": {
+    "level": 3,
+    "description": "Host Blocked by firewall-drop Active Response",
+    "id": "651"
+  },
+  "data": {
+    "srcip": "172.18.0.1",
+    "dstuser": "root",
+    "command": "add",
+    "parameters": {
+      "alert": {
+        "rule": {
+          "level": "10",
+          "description": "sshd: brute force trying to get access to the system. Authentication failed.",
+          "id": "5763"
+        }
+      },
+      "program": "active-response/bin/firewall-drop"
+    }
+  }
+}
 ```
+
+---
+
+## SIEM Dashboard Visualization & Validation
+
+The following visualizations demonstrate the telemetry successfully arriving in the Wazuh Threat Hunting dashboard, confirming both the custom FIM detection and the automated active response actions. 
+
+**Threat Hunting Dashboard Overview:**
+This interface confirms the detection of both the Level 12 Webshell event and the SSH Brute Force attempts, dynamically categorized by MITRE ATT&CK tactics.
+![Wazuh Dashboard Overview](assets/dashboard_overview.png)
+
+**Detailed Incident Logs:**
+The underlying event logs validate the chronological progression of the attack: the Brute Force detection (Rule 5763) followed immediately by the Active Response Host Block (Rule 651), successfully mitigating the threat in real-time.
+![Wazuh Event Logs](assets/event_logs.png)
+
+---
+
+## Key Takeaways
+1. **Custom Rule Authoring:** Default SIEM rules are rarely sufficient for targeted environments. Writing custom XML decoders and rules is a critical skill for reducing noise and catching specific Indicators of Compromise (IoCs).
+2. **Automated Mitigation:** Implementing Active Response bridges the gap between threat detection and threat neutralization, significantly reducing the attack surface during off-hours.
+3. **Containerized Security:** Adapting traditional security tools like `iptables` and `syslog` to work inside minimalist Docker environments requires a deep understanding of Linux capabilities and daemon management.
